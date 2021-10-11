@@ -4,12 +4,12 @@ uses crt;
 Type
 
 // Registros
-      rCiudad=RECORD
+      Ciudad=RECORD
          codCiudad: string[3];
          nombreCiudad: string[40];
          end;
 
-      rEmpresa=RECORD
+      Empresa=RECORD
          codEmp: string[3];
          nomEmp: string[40];
          direccion: string[40];
@@ -19,7 +19,7 @@ Type
          cantConsultas: integer;
          end;
 
-      rProyecto=RECORD
+      Proyecto=RECORD
          codProy: integer;
          codEmp: string[3];
          etapa: char;
@@ -28,7 +28,7 @@ Type
          cantidades: array[1..3] of integer; // Cantidad de Productos | Cantidad de Consultas | Cantidad de Vendidos
          end;
 
-      rProducto=RECORD
+      Producto=RECORD
          codProd: integer;
          codProy: integer;
          precio: real;
@@ -36,57 +36,64 @@ Type
          detalle: string[50];
          end;
 
-      rCliente=RECORD
+      Cliente=RECORD
          dni: string;
          nombre: string[40];
          mail: string[40];
          end;
 
 //Archivos
-         aCiudades= file of rCiudad;
-         aEmpresas= file of rEmpresa;
-         aProyectos= file of rProyecto;
-         aProductos= file of rProducto;
-         aClientes: file of rCliente;
+         Ciudades= file of Ciudad;
+         Empresas= file of Empresa;
+         Proyectos= file of Proyecto;
+         Productos= file of Producto;
+         Clientes= file of Cliente;
    var
-      Ciu:aCiudades; // Ciu,C
-      C:rCiudad;
-      Emp:aEmpresas; // Emp,E
-      E:rEmpresa;
-      Proy:aProyectos; // Proy,PY
-      PY:rProyecto;
-      Prod:aProductos; // Prod,PD
-      PD:rProducto;
-      Cli:aClientes; // Cli,CL
-      CL:rCliente;
+      aCiu:Ciudades; // aCiu,rC
+      rC, rA, rB:Ciudad;
+      aEmp:Empresas; // Emp,E
+      rE:Empresa;
+      aProy:Proyectos; // Proy,PY
+      rPY:Proyecto;
+      aProd:Productos; // Prod,PD
+      rPD:Producto;
+      aCli:Clientes; // Cli,CL
+      rCL:Cliente;
+      opcion:char;
 
 
 // Inicializa Archivos
 procedure INICIALIZACION;
 begin
-  assign(aCiudades,'c:\pascal\Ciudades.dat');
-  assign(aEmpresas,'c:\pascal\Empresas.dat');
-  assign(aProyectos,'c:\pascal\Proyectos.dat');
-  assign(aProductos,'c:\pascal\Productos.dat');
-  assign(aClientes,'c:\pascal\Clientes.dat');
+  assign(aCiu,'C:\Pascal\Ciudades.dat');
+  assign(aEmp,'C:\Pascal\Empresas.dat');
+  assign(aProy,'C:\Pascal\Proyectos.dat');
+  assign(aProd,'C:\Pascal\Productos.dat');
+  assign(aCli,'C:\Pascal\Clientes.dat');
   {$I-}
-  reset(aCiudades);
-  if ioresult = 2 then rewrite(aCiudades);
-  reset(aEmpresas);
-  if ioresult = 2 then rewrite(aEmpresas);
-  reset(aProyectos);
-  if ioresult = 2 then rewrite(aProyectos);
-  reset(aProductos);
-  if ioresult = 2 then rewrite(aProductos);
-  reset(aClientes);
-  if ioresult = 2 then rewrite(aClientes);
+  reset(aCiu);
+  if ioresult = 2 then rewrite(aCiu);
+  reset(aEmp);
+  if ioresult = 2 then rewrite(aEmp);
+  reset(aProy);
+  if ioresult = 2 then rewrite(aProy);
+  reset(aProd);
+  if ioresult = 2 then rewrite(aProd);
+  reset(aCli);
+  if ioresult = 2 then rewrite(aCli);
   {$I+}
 end;
 
 // Búsqueda Dicotómica
-function buscaDico (L:string[3]):boolean; 
+function buscaDico (L:string):boolean; 
+var
+inferior, superior, medio: integer;
+band:boolean;
+
 begin
-reset (aCiu);
+ //writeln('Variable L: ',L);
+ //readKey;
+ reset (aCiu);
  inferior:=0;
  superior:=filesize(aCiu)-1;
  band:= false;
@@ -94,75 +101,108 @@ reset (aCiu);
  begin
  medio:=(inferior+superior) div 2;
  seek(aCiu,medio);
- read(aCiu,C);
-  if L=C.codCiudad
+ read(aCiu,rC);
+ //writeln('Variable L: ',L);
+ //writeln('Variable RC: ',rC.codCiudad);
+ //readkey;
+  if L=rC.codCiudad
       then  band:=true
-         else if L<C.codCiudad
+      else if L<rC.codCiudad
          then superior:=medio-1
          else inferior:=medio+1;
  end;
  if band
  then buscaDico:= true
+
  else buscaDico:= false;
 end;
-      
-// Valida Clave
-function validarClave (x: string) : string;
-var
-   clave, ocult : string;
-begin
-   n := 0;
-   ocult :='';
-   clave := '';
-   repeat
-      write('Ingrese clave: ');
-      ocult := readkey;
-      while ocult <> #13 do
-      begin
-         clave += ocult;
-         write('*');
-         ocult := readkey;
-      end;
-      n +=1;
-      if (clave <> x) then
-      begin
-         clave := '';
-         writeln();
-         textcolor(red);
-         writeln('Clave INCORRECTA');
-         textcolor(yellow);
-      end;
-   until (clave = x) or (n = 3);
-   validacionClave := clave;
-   if (clave = x) and (n <= 3) then
-   begin
-      writeln();
-      textcolor(green);
-      writeln('CLAVE CORRECTA');
-      textcolor(yellow);
-      write('Presione una tecla para continuar.. ');
-      readkey;
-   end;
-end;
 
+function login(tipo: char): boolean;
+var
+intentos, i: integer;
+clave, clave1, clave2 : string;
+c: char;
+begin
+intentos := 3;
+clave := '';
+clave1 := 'emp107';
+clave2 := 'cli107';
+while (intentos > 0) do
+begin
+   intentos := (intentos-1);
+   ClrScr;
+   textcolor(11);
+   gotoxy(5,2);writeln('Ingrese la clave. ', intentos + 1, ' intentos restantes');
+
+   repeat
+   c := readKey;
+   ClrScr;
+   gotoxy(5,2);writeln('Ingrese la clave. ', intentos + 1, ' intentos restantes');
+   gotoxy(5,4);
+   if c = #08 then
+   begin
+      delete(clave,length(clave),1);
+      for i := 1 to length(clave) do
+      write('*');
+   end
+   else
+   begin
+      if c <> #13 then
+   begin
+      clave := clave + c;
+      for i := 1 to length(clave) do
+      write('*')
+   end;
+   end;
+   until (c = #13);
+   if tipo = '1' then
+   begin
+   if (clave = clave1) then
+      exit(true)    
+   else
+      clave := '';
+      gotoxy(5,3);textcolor(14);writeln('Clave incorrecta espere por favor..');
+      delay(1500);
+      textcolor(white);
+   end;
+   if tipo = '2' then
+   begin
+      if clave = clave2 then
+      exit(true)
+   else
+      clave := '';
+      gotoxy(5,3);textcolor(14);writeln('Clave incorrecta espere por favor..');
+      delay(1500);
+      textcolor(white); 
+   end;
+ end;
+textcolor(4);gotoxy(5,5);writeln('Agotaste los intentos, programa bloqueado temporalmente.');
+delay(2000);
+Halt(0);
+exit(false);
+end;
+      
 // Ordenamiento
 procedure ordena;
+var
+i,j : integer;
+
 begin
-reset (Als);
-for i:= 0 to filesize(Als)-2 do
-       for j := i+1 to filesize(Als)-1 do
+reset (aCiu);
+for i:= 0 to filesize(aCiu)-2 do
+       for j := i+1 to filesize(aCiu)-1 do
           begin
-          Seek (Als ,i  );
-          READ (Als, A);
-          Seek (Als , j );
-          READ (Als, B);
-          if A.legajo  > B.legajo
+          Seek (aCiu ,i  );
+          READ (aCiu, rA);
+          Seek (aCiu , j );
+          READ (aCiu, rB);
+          if rA.codCiudad  > rB.codCiudad
               then
                   begin
-                     Seek (Als ,i  );
-                     Write (Als, B);
-                     Seek (Als , j );
-                     write (Als, A);
+                     Seek (aCiu ,i  );
+                     Write (aCiu, rB);
+                     Seek (aCiu , j );
+                     write (aCiu, rA);
                    end;
          end;
 end;
@@ -172,29 +212,49 @@ end;
 procedure altaCiudades;
 begin
    clrscr;
-   seek(Ciu,filesize(Ciu)); // Paro el puntero al final del archivo
+   seek(aCiu,filesize(aCiu)); // Paro el puntero al final del archivo
    gotoxy(30,2); writeln ('Alta de Ciudad');
-   gotoxy(30,3); writeln ('................................' );
+   gotoxy(30,3); writeln ('..............' );
    writeln( );
-   write ('Ingrese Código de Ciudad ( Fin de Datos = 0 ): ');
-   readln (C.codCiudad);
-   if buscaDico(C.codCiudad) then 
-      writeln('La ciudad ya existe')
-   else
-      while C.codCiudad <> 0 do
-      begin
-         write ('Ingrese Nombre de Ciudad: ');
-         readln (C.nombreCiudad);
-         write(Ciu,C); // Grabo el registro completo en el archivo, el puntero ya lo posicioné antes al final del archivo
+   repeat //Nos cercioramos que no permita cargar un código vacio
+      write ('Ingrese Codigo de Ciudad ( Fin de Datos = 0 ): ');
+      readln (rC.codCiudad);
+   until rC.codCiudad <> '';
+   while rC.codCiudad <> '0' do
+   begin
+      if buscaDico(rC.codCiudad) then
+         begin 
+         clrscr;
+         gotoxy(30,2); writeln ('Alta de Ciudad');
+         gotoxy(30,3); writeln ('..............' );
          writeln( );
+         writeln('La Ciudad ya existe.');
+         delay(2000);
+         writeln('Por favor, ingrese Codigo de Ciudad nuevamente, o bien, 0 para volver al menu.');
+         delay(2000);
          writeln( );
-         write ('Ingrese Código de Ciudad ( Fin de Datos = 0 ): ');
-         readln (C.codCiudad);
-      end;
+         //rC.codCiudad := '0';
+         repeat //Nos cercioramos que no permita cargar un código vacio
+            write ('Ingrese Codigo de Ciudad ( Fin de Datos = 0 ): ');
+            readln (rC.codCiudad);
+         until rC.codCiudad <> '';
+         end
+      else
+         begin
+            write ('Ingrese Nombre de Ciudad: ');
+            readln (rC.nombreCiudad);
+            write(aCiu,rC); // Grabo el registro completo en el archivo, el puntero ya lo posicioné antes al final del archivo
+            writeln( );
+            writeln( );
+            repeat //Nos cercioramos que no permita cargar un código vacio
+            write ('Ingrese Codigo de Ciudad ( Fin de Datos = 0 ): ');
+            readln (rC.codCiudad);
+            until rC.codCiudad <> '';
+         end;
    end;
 end;
 
-procedure clientes;
+procedure menuClientes();
 begin
    clrscr;
    writeln('1. Alta de CLIENTE');
@@ -206,15 +266,11 @@ begin
    writeln('0. Volver al menu principal');
 end;
 
-procedure empresas;
+procedure menuEmpresas();
 var
-   op: Integer;
-   clave : string;
+   op: char;
 begin
-   clave:= validacionClave(claveEmp);
    clrscr;
-   if (clave = claveEmp) and (n <= 3) then
-   begin
       repeat
          repeat
             clrscr;
@@ -227,48 +283,42 @@ begin
             writeln('0- Volver al Menu Principal');
             write('Ingrese opcion: ');
             readln(op);
-         until (op >= 0) and (op <= 5);
+         until (op >= '0') and (op <= '5');
       case op of
-      1: altaCiudades;
-      2: altaEmpresas;
-      3: altaProyectos;
-      4: altaProductos;
-      5: ESTADISTICAS;
-      end
-      until op = 0;
-   end
-   else
-   begin
-      textcolor(red);
-      writeln('Clave INCORRECTA. Supera los tres intentos');
-      textcolor(yellow);
-      write('Presione una tecla para volver al Menu Principal.. ');
-      readkey;
-   end;
-   clrscr;
+      '1': altaCiudades;
+      //2: altaEmpresas;
+      //3: altaProyectos;
+      //4: altaProductos;
+      //5: ESTADISTICAS;
+      end;
+      until op = '0';
 end;
 
-procedure menuPrincipal;
-var
-   op : integer;
+
+// MENU PRINCIPAL
 begin
-   clrscr;
+   //clrscr;
+   INICIALIZACION();
    repeat
       repeat
-         //clrscr;
+         clrscr;
          writeln('Menu Principal');
          writeln('1- EMPRESAS');
          writeln('2- CLIENTES');
          write('Ingrese opcion: ');
-         readln(op);
-      until (op >= 0) and (op <= 2);
+         readln(opcion);
+      until (opcion >= '0') and (opcion <= '2');
       clrscr;
-      case op of
-         1: EMPRESAS;
-         2: CLIENTES;
-      end
-   until op = 0;
+      if login(opcion) then
+         case opcion of
+            '1': menuEmpresas();
+            '2': menuClientes();
+         end
+      else
+      opcion := '0';
+   until opcion = '0';
 end.
+
 
 // MENU PRINCIPAL
 // 1. EMPRESAS
