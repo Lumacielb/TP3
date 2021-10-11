@@ -61,6 +61,7 @@ Type
       rCL:Cliente;
       opcion:char;
 
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Inicializa Archivos
 procedure INICIALIZACION;
@@ -84,8 +85,9 @@ begin
   {$I+}
 end;
 
+
 // Búsqueda Dicotómica
-function buscaDico (L:string):boolean; 
+function buscaDico (C:string):boolean; 
 var
 inferior, superior, medio: integer;
 band:boolean;
@@ -105,9 +107,9 @@ begin
  //writeln('Variable L: ',L);
  //writeln('Variable RC: ',rC.codCiudad);
  //readkey;
-  if L=rC.codCiudad
+  if C=rC.codCiudad
       then  band:=true
-      else if L<rC.codCiudad
+      else if C<rC.codCiudad
          then superior:=medio-1
          else inferior:=medio+1;
  end;
@@ -117,6 +119,37 @@ begin
  else buscaDico:= false;
 end;
 
+
+procedure limpiarPantalla;
+begin
+   clrscr;
+end;
+
+
+procedure colorDeTexto(color:string);
+begin
+   case color of
+      'Negro'     :textcolor(0);
+      'Azul'      :textcolor(1);
+      'Verde'     :textcolor(2);
+      'Cyan'      :textcolor(3);
+      'Rojo'      :textcolor(4);
+      'Magenta'   :textcolor(5);
+      'Marron'    :textcolor(6);
+      'GrisClaro' :textcolor(7);
+      'GrisOscuro':textcolor(8);
+      'AzulClaro' :textcolor(9);
+      'VerdeClaro':textcolor(10);
+      'CyanClaro' :textcolor(11);
+      'RojoClaro' :textcolor(12);
+      'MagenClaro':textcolor(13);
+      'Amarillo'  :textcolor(14);
+      'Blanco'    :textcolor(15);
+   end;
+end;
+
+
+// LogIn
 function login(tipo: char): boolean;
 var
 intentos, i: integer;
@@ -130,13 +163,13 @@ clave2 := 'cli107';
 while (intentos > 0) do
 begin
    intentos := (intentos-1);
-   ClrScr;
+   limpiarPantalla();
    textcolor(11);
    gotoxy(5,2);writeln('Ingrese la clave. ', intentos + 1, ' intentos restantes');
 
    repeat
    c := readKey;
-   ClrScr;
+   limpiarPantalla();
    gotoxy(5,2);writeln('Ingrese la clave. ', intentos + 1, ' intentos restantes');
    gotoxy(5,4);
    if c = #08 then
@@ -181,7 +214,8 @@ delay(2000);
 Halt(0);
 exit(false);
 end;
-      
+    
+
 // Ordenamiento
 procedure ordena;
 var
@@ -207,56 +241,73 @@ for i:= 0 to filesize(aCiu)-2 do
          end;
 end;
 
-// ALTAS
 
-procedure altaCiudades;
+// ALTAS
+procedure vistaAltaCiudad;
 begin
-   clrscr;
-   seek(aCiu,filesize(aCiu)); // Paro el puntero al final del archivo
+   limpiarPantalla();
    gotoxy(30,2); writeln ('Alta de Ciudad');
    gotoxy(30,3); writeln ('..............' );
-   writeln( );
-   repeat //Nos cercioramos que no permita cargar un código vacio
+   writeln( );   
+end;
+
+
+procedure altaCiudades;
+var
+codCiudad:string[3];
+begin
+   
+   //seek(aCiu,filesize(aCiu)); // Posicionamos el puntero al final del archivo
+   
+   vistaAltaCiudad(); // Muestra frame de AltaCiudades
+   
+   repeat // Nos cercioramos que no permita cargar un código vacio
       write ('Ingrese Codigo de Ciudad ( Fin de Datos = 0 ): ');
-      readln (rC.codCiudad);
-   until rC.codCiudad <> '';
-   while rC.codCiudad <> '0' do
+      readln (codCiudad);
+   until codCiudad <> '';
+
+   while codCiudad <> '0' do
    begin
-      if buscaDico(rC.codCiudad) then
-         begin 
-         clrscr;
-         gotoxy(30,2); writeln ('Alta de Ciudad');
-         gotoxy(30,3); writeln ('..............' );
-         writeln( );
-         writeln('La Ciudad ya existe.');
-         delay(2000);
-         writeln('Por favor, ingrese Codigo de Ciudad nuevamente, o bien, 0 para volver al menu.');
-         delay(2000);
-         writeln( );
-         //rC.codCiudad := '0';
-         repeat //Nos cercioramos que no permita cargar un código vacio
-            write ('Ingrese Codigo de Ciudad ( Fin de Datos = 0 ): ');
-            readln (rC.codCiudad);
-         until rC.codCiudad <> '';
+      if buscaDico(codCiudad) then
+         begin
+
+            vistaAltaCiudad(); // Muestra frame de AltaCiudades
+
+            gotoxy(30,5);colorDeTexto('Rojo');writeln('Ciudad existente');
+            delay(2000);
+            limpiarPantalla(); // Limpiamos pantalla
+            colorDeTexto('Blanco');writeln('Por favor, ingrese Codigo de Ciudad nuevamente, o bien, 0 para volver al menu.');
+            delay(2000);
+            writeln( );
+            //rC.codCiudad := '0';
+            repeat // Nos cercioramos que no permita cargar un código vacio
+               write ('Ingrese Codigo de Ciudad ( Fin de Datos = 0 ): ');
+               readln (codCiudad);
+            until codCiudad <> '';
          end
       else
          begin
+            rC.codCiudad := codCiudad; 
             write ('Ingrese Nombre de Ciudad: ');
             readln (rC.nombreCiudad);
-            write(aCiu,rC); // Grabo el registro completo en el archivo, el puntero ya lo posicioné antes al final del archivo
+            seek(aCiu,filesize(aCiu)); // Posicionamos el puntero al final del archivo
+            write(aCiu,rC); // Grabamos el registro completo en el archivo, el puntero ya lo posicionamos antes al final del archivo
+            ordena(); // Llamamos al Procedure Ordena para ordenar el archivo de Ciudades
             writeln( );
             writeln( );
-            repeat //Nos cercioramos que no permita cargar un código vacio
-            write ('Ingrese Codigo de Ciudad ( Fin de Datos = 0 ): ');
-            readln (rC.codCiudad);
-            until rC.codCiudad <> '';
+            repeat // Nos cercioramos que no permita cargar un código vacio
+               write ('Ingrese Codigo de Ciudad ( Fin de Datos = 0 ): ');
+               readln (codCiudad);
+            until codCiudad <> '';
          end;
    end;
 end;
 
+
+// Menú Clientes
 procedure menuClientes();
 begin
-   clrscr;
+   limpiarPantalla(); // Limpiamos pantalla
    writeln('1. Alta de CLIENTE');
       // Al seleccionar esta opción se muestra un "Ingrese DNI", entonces
       // Se procede a comprobar si el cliente existe, en caso de que no, se lo carga
@@ -266,14 +317,16 @@ begin
    writeln('0. Volver al menu principal');
 end;
 
+
+// Menú Empresas
 procedure menuEmpresas();
 var
    op: char;
 begin
-   clrscr;
+   limpiarPantalla(); // Limpiamos pantalla
       repeat
          repeat
-            clrscr;
+            limpiarPantalla(); // Limpiamos pantalla
             writeln('Menu Empresas Desarrolladoras');
             writeln('1- Alta CIUDADES');
             writeln('2- Alta EMPRESAS');
@@ -301,14 +354,14 @@ begin
    INICIALIZACION();
    repeat
       repeat
-         clrscr;
+         limpiarPantalla(); // Limpiamos pantalla
          writeln('Menu Principal');
          writeln('1- EMPRESAS');
          writeln('2- CLIENTES');
          write('Ingrese opcion: ');
          readln(opcion);
       until (opcion >= '0') and (opcion <= '2');
-      clrscr;
+      limpiarPantalla(); // Limpiamos pantalla
       if login(opcion) then
          case opcion of
             '1': menuEmpresas();
